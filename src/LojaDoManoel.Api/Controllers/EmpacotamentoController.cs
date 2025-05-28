@@ -3,9 +3,12 @@ using LojaDoManoel.Api.Models;
 using LojaDoManoel.Api.Services;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace LojaDoManoel.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class EmpacotamentoController : ControllerBase
@@ -15,6 +18,12 @@ namespace LojaDoManoel.Api.Controllers
         public EmpacotamentoController(EmpacotadorService service)
         {
             _service = service;
+        }
+
+        [HttpGet("autenticado")]
+        public IActionResult TesteAutenticacao()
+        {
+            return Ok(new { message = "Você está autenticado!" });
         }
 
         [HttpPost]
