@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LojaDoManoel.Api.Migrations
 {
     [DbContext(typeof(LojaDoManoelDbContext))]
-    [Migration("20250528003426_databasemigration")]
-    partial class Databasemigration
+    [Migration("20250528143232_CriarTabelaUsers")]
+    partial class CriarTabelaUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -78,6 +78,32 @@ namespace LojaDoManoel.Api.Migrations
                     b.HasIndex("PedidoId");
 
                     b.ToTable("Produtos");
+                });
+
+            modelBuilder.Entity("LojaDoManoel.Api.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("LojaDoManoel.Api.Models.Produto", b =>

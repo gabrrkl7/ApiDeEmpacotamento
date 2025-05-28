@@ -5,7 +5,7 @@
 namespace LojaDoManoel.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class databasemigration : Migration
+    public partial class Databasemigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
