@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using LojaDoManoel.Api.Models;
 using LojaDoManoel.Api.Services;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
-
 
 namespace LojaDoManoel.Api.Controllers
 {
@@ -27,21 +27,45 @@ namespace LojaDoManoel.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Pedido pedido)
+        public async Task<IActionResult> Post([FromBody] List<Pedido> pedidos)
         {
-            var empacotado = await _service.EmpacotarESalvarPedidoAsync(pedido);
-
-            var resposta = new
+            var resultados = new List<object>();
+            
+            foreach (var pedido in pedidos)
             {
-                PedidoId = pedido.Id,
-                CaixasUsadas = empacotado.Select(e => new
+                
+                var resultadoEmpacotamento = await _service.EmpacotarESalvarPedidoAsync(pedido);
+                
+                var caixasUsadas = resultadoEmpacotamento
+                    .Select(e => new {
+                        Caixa = new { 
+                            e.Caixa.Nome, 
+                            e.Caixa.Altura, 
+                            e.Caixa.Largura, 
+                            e.Caixa.Comprimento 
+                        },
+                        Produtos = e.Produtos.Select(p => new 
+                        {
+                            p.Id,
+                            p.Nome,
+                            Dimensoes = new 
+                            {
+                                p.Altura,
+                                p.Largura,
+                                p.Comprimento
+                            }
+                        })
+                    })
+                    .ToList();
+                
+                resultados.Add(new
                 {
-                    Caixa = new { e.Caixa.Altura, e.Caixa.Largura, e.Caixa.Comprimento },
-                    Produtos = e.Produtos.Select(p => p.Nome)
-                })
-            };
-
-            return Ok(resposta);
+                    PedidoId = pedido.Id,
+                    CaixasUsadas = caixasUsadas
+                });
+            }
+            
+            return Ok(resultados);
         }
     }
 }

@@ -1,5 +1,4 @@
 using LojaDoManoel.Api.Data;
-using LojaDoManoel.Api.DTOs;
 using LojaDoManoel.Api.Models;
 using System;
 using System.Collections.Generic;
@@ -24,7 +23,7 @@ namespace LojaDoManoel.Api.Services
             _context = context;
         }
 
-        public async Task<List<EmpacotamentoResultado>> EmpacotarESalvarPedidoAsync(Pedido pedido)
+        public async Task<List<(Caixa Caixa, List<Produto> Produtos)>> EmpacotarESalvarPedidoAsync(Pedido pedido)
         {
             var resultado = EmpacotarPedido(pedido);
 
@@ -34,9 +33,9 @@ namespace LojaDoManoel.Api.Services
             return resultado;
         }
 
-        public List<EmpacotamentoResultado> EmpacotarPedido(Pedido pedido)
+        public List<(Caixa Caixa, List<Produto> Produtos)> EmpacotarPedido(Pedido pedido)
         {
-            var resultado = new List<EmpacotamentoResultado>();
+            var resultado = new List<(Caixa, List<Produto>)>();
             var produtosRestantes = new List<Produto>(pedido.Produtos);
 
             // Ordena caixas pelo volume (menor primeiro)
@@ -53,11 +52,12 @@ namespace LojaDoManoel.Api.Services
                 if (caixa == null)
                     throw new Exception("Nenhuma caixa disponível para os produtos restantes.");
 
-                var empacotamento = EmpacotarProdutosNaCaixa(caixa, produtosRestantes);
-                if (empacotamento.Produtos.Any())
+                var (produtosNaCaixa, produtosRemovidos) = EmpacotarProdutosNaCaixa(caixa, produtosRestantes);
+                
+                if (produtosNaCaixa.Any())
                 {
-                    resultado.Add(empacotamento);
-                    produtosRestantes = produtosRestantes.Except(empacotamento.Produtos).ToList();
+                    resultado.Add((caixa, produtosNaCaixa));
+                    produtosRestantes = produtosRestantes.Except(produtosRemovidos).ToList();
                 }
                 else
                 {
@@ -68,9 +68,12 @@ namespace LojaDoManoel.Api.Services
             return resultado;
         }
 
-        private EmpacotamentoResultado EmpacotarProdutosNaCaixa(Caixa caixa, List<Produto> produtosRestantes)
+        private (List<Produto> produtosNaCaixa, List<Produto> produtosRemovidos) EmpacotarProdutosNaCaixa(
+            Caixa caixa, 
+            List<Produto> produtosRestantes)
         {
             var produtosNaCaixa = new List<Produto>();
+            var produtosRemovidos = new List<Produto>();
             var espacoRestante = new DimensoesCaixaService(caixa);
 
             foreach (var produto in produtosRestantes.ToList())
@@ -78,15 +81,12 @@ namespace LojaDoManoel.Api.Services
                 if (espacoRestante.CabeProduto(produto))
                 {
                     produtosNaCaixa.Add(produto);
+                    produtosRemovidos.Add(produto);
                     espacoRestante.RemoverProduto(produto);
                 }
             }
 
-            return new EmpacotamentoResultado
-            {
-                Caixa = caixa,
-                Produtos = produtosNaCaixa
-            };
+            return (produtosNaCaixa, produtosRemovidos);
         }
     }
 }
